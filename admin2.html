@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم | إدارة الكتب</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #f1f5f9; color: #1e293b; padding: 1.5rem 1rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .header a { text-decoration: none; color: #2563eb; font-weight: bold; background: #fff; padding: 0.5rem 1rem; border-radius: 8px; }
+
+    /* صندوق تسجيل الدخول */
+    .login-box { background: #fff; padding: 2.5rem 1.5rem; border-radius: 12px; max-width: 450px; margin: 4rem auto; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    .login-box h2 { margin-bottom: 0.8rem; }
+    .login-box p { color: #64748b; margin-bottom: 1.5rem; }
+    .btn-google { background: #2563eb; color: #fff; padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 1rem; width: 100%; }
+    .btn-google:hover { background: #1d4ed8; }
+    .btn-logout { background: #ef4444; padding: 0.5rem 1rem; font-size: 0.9rem; }
+
+    /* إخفاء محتوى الإدارة حتى يتم تسجيل الدخول */
+    #admin-content { display: none; }
+
+    .form-box { background: #fff; padding: 1.5rem; border-radius: 12px; max-width: 600px; margin: 0 auto 1.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .form-box h2 { margin-bottom: 1rem; font-size: 1.3rem; }
+    input { width: 100%; padding: 0.7rem; margin-bottom: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
+    .btns { display: flex; gap: 0.5rem; }
+    button { border: none; padding: 0.7rem 1rem; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
+    .btn-save { background: #10b981; flex: 1; }
+    .btn-save.editing { background: #f59e0b; }
+    .btn-cancel { background: #64748b; display: none; }
+
+    /* قسم البحث */
+    .search-box { max-width: 600px; margin: 0 auto 1.5rem; display: flex; gap: 0.5rem; }
+    .search-box input { flex: 1; margin-bottom: 0; padding: 0.8rem 1.2rem; border-radius: 50px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.05); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .search-box input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    .btn-search { background: #2563eb; border-radius: 50px; padding: 0 1.5rem; white-space: nowrap; }
+    .btn-search:hover { background: #1d4ed8; }
+    .btn-clear { background: #64748b; border-radius: 50px; padding: 0 1rem; display: none; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.2rem; }
+    .card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+    .card img { width: 100%; height: 220px; object-fit: cover; background: #e2e8f0; }
+    .info { padding: 1rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .title { font-weight: bold; font-size: 1.05rem; margin-bottom: 0.2rem; }
+    .author { font-size: 0.85rem; color: #64748b; margin-bottom: 0.4rem; }
+    .price { font-weight: bold; color: #2563eb; margin-bottom: 0.8rem; }
+    .actions { display: flex; gap: 0.5rem; }
+    .btn-edit { background: #3b82f6; flex: 1; padding: 0.4rem; }
+    .btn-del { background: #ef4444; flex: 1; padding: 0.4rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- شاشة تسجيل الدخول -->
+    <div id="login-box" class="login-box">
+      <h2>🔒 تسجيل دخول المدير</h2>
+      <p>يرجى تسجيل الدخول بحساب جوجل المصرح له لإدارة الكتب.</p>
+      <button type="button" id="login-btn" class="btn-google">تسجيل الدخول باستخدام Google</button>
+    </div>
+
+    <!-- محتوى لوحة التحكم (يظهر للمدير فقط) -->
+    <div id="admin-content">
+      <div class="header">
+        <h1>⚙️ إدارة الكتب</h1>
+        <div class="header-actions">
+          <a href="index.html">← المتجر</a>
+          <button type="button" id="logout-btn" class="btn-logout">خروج</button>
+        </div>
+      </div>
+
+      <div class="form-box" id="form-box">
+        <h2 id="form-title">إضافة كتاب جديد</h2>
+        <form id="book-form">
+          <input type="text" id="title" required placeholder="اسم الكتاب *">
+          <input type="text" id="author" placeholder="اسم المؤلف">
+          <input type="number" step="0.01" id="price" required placeholder="السعر ($) *">
+          <input type="url" id="coverUrl" required placeholder="رابط صورة الغلاف (URL) *">
+          <div class="btns">
+            <button type="submit" id="save-btn" class="btn-save">نشر الكتاب</button>
+            <button type="button" id="cancel-btn" class="btn-cancel">إلغاء</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- قسم البحث مع زر -->
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="🔍 ابحث عن اسم كتاب أو مؤلف...">
+        <button type="button" id="search-btn" class="btn-search">بحث</button>
+        <button type="button" id="clear-btn" class="btn-clear">✕</button>
+      </div>
+
+      <div id="books-grid" class="grid">جاري التحميل...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC923h6jFhkIglu3k19g4ooKKgxyDEro6o",
+      authDomain: "books-aa9b5.firebaseapp.com",
+      databaseURL: "https://books-aa9b5-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "books-aa9b5",
+      storageBucket: "books-aa9b5.firebasestorage.app",
+      messagingSenderId: "792168538715",
+      appId: "1:792168538715:web:eb30aa39872afa27b5d57e",
+      measurementId: "G-GQGCQH442N"
+    };
+
+    const ADMIN_EMAIL = "lifenasser85@gmail.com";
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const loginBox = document.getElementById("login-box");
+    const adminContent = document.getElementById("admin-content");
+    const loginBtn = document.getElementById("login-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+
+    const form = document.getElementById("book-form");
+    const saveBtn = document.getElementById("save-btn");
+    const cancelBtn = document.getElementById("cancel-btn");
+    const formTitle = document.getElementById("form-title");
+    const grid = document.getElementById("books-grid");
+
+    const searchInput = document.getElementById("search-input");
+    const searchBtn = document.getElementById("search-btn");
+    const clearBtn = document.getElementById("clear-btn");
+
+    let editId = null;
+    let booksData = {};
+    let allBooks = [];
+
+    // ===== المصادقة وتسجيل الدخول =====
+    loginBtn.onclick = async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        alert("فشل تسجيل الدخول: " + err.message);
+      }
+    };
+
+    logoutBtn.onclick = () => signOut(auth);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user && user.email === ADMIN_EMAIL) {
+        loginBox.style.display = "none";
+        adminContent.style.display = "block";
+        await loadBooks();
+        renderBooks(allBooks);
+      } else {
+        if (user) {
+          alert("عذراً، هذا الحساب غير مصرح له بالدخول: " + user.email);
+          await signOut(auth);
+        }
+        loginBox.style.display = "block";
+        adminContent.style.display = "none";
+      }
+    });
+
+    // ===== النموذج (إضافة / تعديل) =====
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      saveBtn.disabled = true;
+      const data = {
+        title: document.getElementById("title").value.trim(),
+        author: document.getElementById("author").value.trim(),
+        price: Number(document.getElementById("price").value),
+        coverUrl: document.getElementById("coverUrl").value.trim()
+      };
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, "Books", editId), data);
+        } else {
+          data.createdAt = new Date();
+          await addDoc(collection(db, "Books"), data);
+        }
+        resetForm();
+        await loadBooks();
+        applySearch();
+      } catch (err) {
+        alert("خطأ: " + err.message);
+      }
+      saveBtn.disabled = false;
+    };
+
+    cancelBtn.onclick = resetForm;
+
+    function resetForm() {
+      editId = null;
+      form.reset();
+      formTitle.textContent = "إضافة كتاب جديد";
+      saveBtn.textContent = "نشر الكتاب";
+      saveBtn.classList.remove("editing");
+      cancelBtn.style.display = "none";
+    }
+
+    window.editBook = (id) => {
+      const b = booksData[id];
+      if (!b) return;
+      editId = id;
+      document.getElementById("title").value = b.title || "";
+      document.getElementById("author").value = b.author || "";
+      document.getElementById("price").value = b.price ?? "";
+      document.getElementById("coverUrl").value = b.coverUrl || "";
+      formTitle.textContent = "تعديل: " + b.title;
+      saveBtn.textContent = "حفظ التعديل";
+      saveBtn.classList.add("editing");
+      cancelBtn.style.display = "block";
+      document.getElementById("form-box").scrollIntoView({ behavior: "smooth" });
+    };
+
+    window.delBook = async (id) => {
+      if (confirm("حذف الكتاب نهائياً؟")) {
+        await deleteDoc(doc(db, "Books", id));
+        if (editId === id) resetForm();
+        await loadBooks();
+        applySearch();
+      }
+    };
+
+    // ===== تحميل الكتب =====
+    async function loadBooks() {
+      const snap = await getDocs(collection(db, "Books"));
+      booksData = {};
+      allBooks = [];
+
+      snap.forEach((d) => {
+        const b = d.data();
+        booksData[d.id] = b;
+        allBooks.push({ id: d.id, ...b });
+      });
+    }
+
+    // ===== عرض البطاقات =====
+    function renderBooks(books) {
+      grid.innerHTML = books.length === 0
+        ? "<p style='grid-column:1/-1; text-align:center; color:#64748b;'>لا توجد كتب مطابقة.</p>"
+        : "";
+
+      books.forEach((b) => {
+        grid.innerHTML += `
+          <div class="card">
+            <img src="${b.coverUrl || 'https://placehold.co/220x220?text=No+Cover'}" alt="${b.title}">
+            <div class="info">
+              <div>
+                <div class="title">${b.title}</div>
+                <div class="author">${b.author || ""}</div>
+                <div class="price">${b.price} $</div>
+              </div>
+              <div class="actions">
+                <button class="btn-edit" onclick="editBook('${b.id}')">تعديل</button>
+                <button class="btn-del" onclick="delBook('${b.id}')">حذف</button>
+              </div>
+            </div>
+          </div>`;
+      });
+    }
+
+    // ===== البحث =====
+    function applySearch() {
+      const term = searchInput.value.toLowerCase().trim();
+      clearBtn.style.display = term ? "block" : "none";
+
+      if (!term) {
+        renderBooks(allBooks);
+        return;
+      }
+
+      const filtered = allBooks.filter((b) =>
+        (b.title && b.title.toLowerCase().includes(term)) ||
+        (b.author && b.author.toLowerCase().includes(term))
+      );
+      renderBooks(filtered);
+    }
+
+    searchBtn.addEventListener("click", applySearch);
+
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        applySearch();
+      }
+    });
+
+    searchInput.addEventListener("input", applySearch);
+
+    clearBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      applySearch();
+      searchInput.focus();
+    });
+  </script>
+</body>
+</html>
